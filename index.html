@@ -1,220 +1,247 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Rectangle Area – Student 220504544</title>
-    <!-- Ethers.js v5 (UMD build) -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>RectangleArea DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 200px;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .section {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
+  <h2>📐 RectangleArea DApp</h2>
+  <p>Set width & height, then calculate area on-chain</p>
 
-<h2>Rectangle Area DApp – Student 220504544</h2>
+  <!-- Connect -->
+  <button id="connectBtn" onclick="connectWallet()">🔗 Connect MetaMask</button>
+  <p id="wallet">Not connected</p>
 
-<!-- Connect Wallet -->
-<button onclick="connectWallet()">Connect Wallet</button>
-<p id="account"></p>
-<hr>
+  <hr />
 
-<!-- Width Input -->
-<input type="number" id="widthInput" placeholder="Enter width" />
-<button onclick="setWidth()">Set Width 220504544</button>
-<br><br>
+  <!-- Width -->
+  <div class="section">
+    <h3>Set Width</h3>
+    <input id="widthInput" type="number" min="1" placeholder="Enter width (integer)" />
+    <button onclick="setWidthValue()">Set Width</button>
+    <br />
+    <button onclick="readWidth()">Get Width</button>
+    <p id="widthDisplay">Width: -</p>
+  </div>
 
-<!-- Height Input -->
-<input type="number" id="heightInput" placeholder="Enter height" />
-<button onclick="setHeight()">Set Height 220504544</button>
-<br><br>
+  <!-- Height -->
+  <div class="section">
+    <h3>Set Height</h3>
+    <input id="heightInput" type="number" min="1" placeholder="Enter height (integer)" />
+    <button onclick="setHeightValue()">Set Height</button>
+    <br />
+    <button onclick="readHeight()">Get Height</button>
+    <p id="heightDisplay">Height: -</p>
+  </div>
 
-<!-- Get Area -->
-<button onclick="getArea()">Area 220504544</button>
+  <!-- Area -->
+  <div class="section">
+    <h3>Area</h3>
+    <button onclick="readArea()">Get Area</button>
+    <p id="areaDisplay">Area: -</p>
+  </div>
 
-<p id="output"></p>
-<p id="error" style="color:red;"></p>
+  <script>
+    // ---------- CONTRACT DETAILS ----------
+    const contractAddress = "0x388e7eca4902D821eD172595A948e4Cc87A8472b";
 
-<script>
-// -------------------------
-// Contract Information
-// -------------------------
-const contractAddress = "0x388e7eca4902D821eD172595A948e4Cc87A8472b";
-
-const abi = [
-    {
+    const contractABI = [
+      {
         "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "h",
-                "type": "uint256"
-            }
+          { "internalType": "uint256", "name": "h", "type": "uint256" }
         ],
         "name": "setHeight",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
+      },
+      {
         "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "w",
-                "type": "uint256"
-            }
+          { "internalType": "uint256", "name": "w", "type": "uint256" }
         ],
         "name": "setWidth",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
+      },
+      {
         "inputs": [],
         "name": "area",
         "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
+          { "internalType": "uint256", "name": "", "type": "uint256" }
         ],
         "stateMutability": "view",
         "type": "function"
-    },
-    {
+      },
+      {
         "inputs": [],
         "name": "getHeight",
         "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
+          { "internalType": "uint256", "name": "", "type": "uint256" }
         ],
         "stateMutability": "view",
         "type": "function"
-    },
-    {
+      },
+      {
         "inputs": [],
         "name": "getWidth",
         "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
+          { "internalType": "uint256", "name": "", "type": "uint256" }
         ],
         "stateMutability": "view",
         "type": "function"
-    }
-];
+      }
+    ];
 
-let provider;
-let signer;
-let contract;
+    // ---------- GLOBALS ----------
+    let provider;
+    let signer;
+    let contract;
 
-// -------------------------
-// Connect Wallet (MetaMask)
-// -------------------------
-async function connectWallet() {
-    document.getElementById("error").innerText = "";
-    try {
-        if (!window.ethereum) {
-            alert("MetaMask not found. Please install it.");
-            return;
-        }
+    // ---------- CONNECT METAMASK ----------
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("Please install MetaMask!");
+        return;
+      }
 
-        console.log("Requesting accounts...");
-        // This MUST trigger the MetaMask popup
+      try {
         await window.ethereum.request({ method: "eth_requestAccounts" });
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        const addr = await signer.getAddress();
-        document.getElementById("account").innerText = "Connected: " + addr;
-        console.log("Connected:", addr);
-    } catch (err) {
+        const address = await signer.getAddress();
+        document.getElementById("wallet").innerText = "Connected: " + address;
+
+        const btn = document.getElementById("connectBtn");
+        btn.innerText = "✅ Connected";
+        btn.disabled = true;
+      } catch (err) {
         console.error(err);
-        document.getElementById("error").innerText = "Error connecting wallet: " + err.message;
+        alert("Connection failed: " + (err.message || err));
+      }
     }
-}
 
-// Ensure contract is ready
-async function getContract() {
-    if (!contract) {
-        await connectWallet();
-    }
-    return contract;
-}
+    // ---------- SET WIDTH ----------
+    async function setWidthValue() {
+      if (!contract) {
+        alert("Connect MetaMask first.");
+        return;
+      }
 
-// -------------------------
-// Write: Set Width
-// -------------------------
-async function setWidth() {
-    document.getElementById("error").innerText = "";
-    try {
-        console.log("Set Width button clicked");
-        const width = document.getElementById("widthInput").value;
-        if (!width || width <= 0) {
-            document.getElementById("error").innerText = "Width must be greater than 0.";
-            return;
-        }
+      const w = document.getElementById("widthInput").value;
+      if (!w || Number(w) <= 0) {
+        alert("Enter a width greater than 0.");
+        return;
+      }
 
-        const c = await getContract();
-        const tx = await c.setWidth(width);
-        document.getElementById("output").innerText = "Sending tx to set width...";
-        console.log("setWidth tx:", tx.hash);
+      try {
+        const tx = await contract.setWidth(w);
         await tx.wait();
-        document.getElementById("output").innerText = "Width set to: " + width;
-    } catch (err) {
+        alert("Width set to " + w);
+        await readWidth();
+      } catch (err) {
         console.error(err);
-        document.getElementById("error").innerText = "Error setting width: " + err.message;
+        alert("setWidth failed: " + (err.data?.message || err.message || err));
+      }
     }
-}
 
-// -------------------------
-// Write: Set Height
-// -------------------------
-async function setHeight() {
-    document.getElementById("error").innerText = "";
-    try {
-        console.log("Set Height button clicked");
-        const height = document.getElementById("heightInput").value;
-        if (!height || height <= 0) {
-            document.getElementById("error").innerText = "Height must be greater than 0.";
-            return;
-        }
+    // ---------- SET HEIGHT ----------
+    async function setHeightValue() {
+      if (!contract) {
+        alert("Connect MetaMask first.");
+        return;
+      }
 
-        const c = await getContract();
-        const tx = await c.setHeight(height);
-        document.getElementById("output").innerText = "Sending tx to set height...";
-        console.log("setHeight tx:", tx.hash);
+      const h = document.getElementById("heightInput").value;
+      if (!h || Number(h) <= 0) {
+        alert("Enter a height greater than 0.");
+        return;
+      }
+
+      try {
+        const tx = await contract.setHeight(h);
         await tx.wait();
-        document.getElementById("output").innerText = "Height set to: " + height;
-    } catch (err) {
+        alert("Height set to " + h);
+        await readHeight();
+      } catch (err) {
         console.error(err);
-        document.getElementById("error").innerText = "Error setting height: " + err.message;
+        alert("setHeight failed: " + (err.data?.message || err.message || err));
+      }
     }
-}
 
-// -------------------------
-// Read: Compute Area
-// -------------------------
-async function getArea() {
-    document.getElementById("error").innerText = "";
-    try {
-        console.log("Get Area button clicked");
-        const c = await getContract();
-        const width = await c.getWidth();
-        const height = await c.getHeight();
-        const area = await c.area();
+    // ---------- READ WIDTH ----------
+    async function readWidth() {
+      if (!contract) {
+        alert("Connect MetaMask first.");
+        return;
+      }
 
-        document.getElementById("output").innerHTML =
-            "Width: " + width.toString() +
-            "<br>Height: " + height.toString() +
-            "<br><b>Area: " + area.toString() + "</b>";
-    } catch (err) {
+      try {
+        const w = await contract.getWidth();
+        document.getElementById("widthDisplay").innerText = "Width: " + w.toString();
+      } catch (err) {
         console.error(err);
-        document.getElementById("error").innerText = "Error getting area: " + err.message;
+        alert("Error reading width: " + (err.message || err));
+      }
     }
-}
-</script>
+
+    // ---------- READ HEIGHT ----------
+    async function readHeight() {
+      if (!contract) {
+        alert("Connect MetaMask first.");
+        return;
+      }
+
+      try {
+        const h = await contract.getHeight();
+        document.getElementById("heightDisplay").innerText = "Height: " + h.toString();
+      } catch (err) {
+        console.error(err);
+        alert("Error reading height: " + (err.message || err));
+      }
+    }
+
+    // ---------- READ AREA ----------
+    async function readArea() {
+      if (!contract) {
+        alert("Connect MetaMask first.");
+        return;
+      }
+
+      try {
+        const a = await contract.area();
+        document.getElementById("areaDisplay").innerText = "Area: " + a.toString();
+      } catch (err) {
+        console.error(err);
+        // If width or height not set, contract will revert with require
+        alert("Error reading area (did you set width & height?): " + (err.data?.message || err.message || err));
+      }
+    }
+  </script>
 </body>
 </html>
+
