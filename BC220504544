@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rectangle Area – Student 220504544</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
+</head>
+<body>
+
+<h2>Rectangle Area DApp – Student 220504544</h2>
+
+<!-- Width Input -->
+<input type="number" id="widthInput" placeholder="Enter width" />
+<button onclick="setWidth()">Set Width 220504544</button>
+<br><br>
+
+<!-- Height Input -->
+<input type="number" id="heightInput" placeholder="Enter height" />
+<button onclick="setHeight()">Set Height 220504544</button>
+<br><br>
+
+<!-- Get Area -->
+<button onclick="getArea()">Area 220504544</button>
+
+<p id="output"></p>
+
+<script>
+
+// -------------------------
+// Contract Information
+// -------------------------
+const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
+
+const abi = [
+    "function setWidth(uint256 w) public",
+    "function setHeight(uint256 h) public",
+    "function area() public view returns (uint256)",
+    "function getWidth() public view returns (uint256)",
+    "function getHeight() public view returns (uint256)"
+];
+
+// -------------------------
+// Connect to MetaMask
+// -------------------------
+async function getContract() {
+    if (!window.ethereum) {
+        alert("Please install MetaMask first.");
+        return;
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    return new ethers.Contract(contractAddress, abi, signer);
+}
+
+// -------------------------
+// Write: Set Width
+// -------------------------
+async function setWidth() {
+    const width = document.getElementById("widthInput").value;
+    const contract = await getContract();
+    const tx = await contract.setWidth(width);
+    await tx.wait();
+    document.getElementById("output").innerText = "Width set to: " + width;
+}
+
+// -------------------------
+// Write: Set Height
+// -------------------------
+async function setHeight() {
+    const height = document.getElementById("heightInput").value;
+    const contract = await getContract();
+    const tx = await contract.setHeight(height);
+    await tx.wait();
+    document.getElementById("output").innerText = "Height set to: " + height;
+}
+
+// -------------------------
+// Read: Compute Area
+// -------------------------
+async function getArea() {
+    const contract = await getContract();
+    const width = await contract.getWidth();
+    const height = await contract.getHeight();
+    const area = await contract.area();
+
+    document.getElementById("output").innerHTML =
+        "Width: " + width +
+        "<br>Height: " + height +
+        "<br><b>Area: " + area + "</b>";
+}
+
+</script>
+</body>
+</html>
