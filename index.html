@@ -2,12 +2,14 @@
 <html>
 <head>
     <title>Rectangle Area – Student 220504544</title>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
+    <!-- Ethers.js v5 (UMD build) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
 
 <h2>Rectangle Area DApp – Student 220504544</h2>
 
+<!-- Connect Wallet -->
 <button onclick="connectWallet()">Connect Wallet</button>
 <p id="account"></p>
 <hr>
@@ -110,22 +112,23 @@ let contract;
 // Connect Wallet (MetaMask)
 // -------------------------
 async function connectWallet() {
+    document.getElementById("error").innerText = "";
     try {
         if (!window.ethereum) {
-            alert("Please install MetaMask first.");
+            alert("MetaMask not found. Please install it.");
             return;
         }
 
-        // ask MetaMask for accounts
+        console.log("Requesting accounts...");
+        // This MUST trigger the MetaMask popup
         await window.ethereum.request({ method: "eth_requestAccounts" });
 
-        provider = new ethers.BrowserProvider(window.ethereum);
-        signer = await provider.getSigner();
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
 
         const addr = await signer.getAddress();
         document.getElementById("account").innerText = "Connected: " + addr;
-        document.getElementById("error").innerText = "";
         console.log("Connected:", addr);
     } catch (err) {
         console.error(err);
@@ -133,6 +136,7 @@ async function connectWallet() {
     }
 }
 
+// Ensure contract is ready
 async function getContract() {
     if (!contract) {
         await connectWallet();
@@ -146,6 +150,7 @@ async function getContract() {
 async function setWidth() {
     document.getElementById("error").innerText = "";
     try {
+        console.log("Set Width button clicked");
         const width = document.getElementById("widthInput").value;
         if (!width || width <= 0) {
             document.getElementById("error").innerText = "Width must be greater than 0.";
@@ -170,6 +175,7 @@ async function setWidth() {
 async function setHeight() {
     document.getElementById("error").innerText = "";
     try {
+        console.log("Set Height button clicked");
         const height = document.getElementById("heightInput").value;
         if (!height || height <= 0) {
             document.getElementById("error").innerText = "Height must be greater than 0.";
@@ -194,15 +200,16 @@ async function setHeight() {
 async function getArea() {
     document.getElementById("error").innerText = "";
     try {
+        console.log("Get Area button clicked");
         const c = await getContract();
         const width = await c.getWidth();
         const height = await c.getHeight();
         const area = await c.area();
 
         document.getElementById("output").innerHTML =
-            "Width: " + width +
-            "<br>Height: " + height +
-            "<br><b>Area: " + area + "</b>";
+            "Width: " + width.toString() +
+            "<br>Height: " + height.toString() +
+            "<br><b>Area: " + area.toString() + "</b>";
     } catch (err) {
         console.error(err);
         document.getElementById("error").innerText = "Error getting area: " + err.message;
@@ -211,6 +218,3 @@ async function getArea() {
 </script>
 </body>
 </html>
-
-
-
